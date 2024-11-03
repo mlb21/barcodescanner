@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discogs Barcode Scanner</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f3f0ff;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #input-area {
+            flex: 1;
+            margin-right: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        #results-area {
+            flex: 2;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        h1 {
+            color: #6a0dad;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #6a0dad;
+            outline: none;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #6a0dad;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #4b0b7c;
+            transform: scale(1.05);
+        }
+        h2 {
+            margin-top: 20px;
+            text-align: left;
+            color: #6a0dad;
+        }
+        #scanned-barcode-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        #scanned-barcode-list li {
+            margin: 10px 0;
+            background: #f3f0ff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s;
+        }
+        #scanned-barcode-list li:hover {
+            background: #e0d6f2;
+        }
+        #scanned-barcode-list img {
+            max-width: 50px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        #error-message {
+            color: red;
+            text-align: left;
+            margin-top: 10px;
+        }
+        .remove-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 7px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .remove-button:hover {
+            background-color: #c82333;
+            transform: scale(1.05);
+        }
+        #copy-confirmation, #no-links-message {
+            margin-top: 10px;
+            display: none; /* Initially hidden */
+        }
+        #copy-confirmation {
+            color: green;
+        }
+        #no-links-message {
+            color: red;
+        }
+        /* Modal styles */
+        #confirmation-modal {
+            display: none; /* Hidden by default */
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0, 0, 0, 0.6); 
+            padding-top: 100px;
+        }
+        #modal-content {
+            background-color: #ffffff;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px; 
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .modal-button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #6a0dad;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .modal-button:hover {
+            background-color: #4b0b7c;
+            transform: scale(1.05);
+        }
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            #input-area, #results-area {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Discogs Barcode Scanner</h1>
+    <div class="container">
+        <div id="input-area">
+            <label for="barcode-input">Scan Barcode:</label>
+            <input type="text" id="barcode-input" placeholder="Scan or enter barcode" autofocus>
+            <div>
+                <button id="reset">Reset</button>
+                <button id="copy-links">Copy Links</button>
+                <div id="copy-confirmation">Links copied!</div> <!-- Confirmation message -->
+                <div id="no-links-message">No links to copy!</div> <!-- No links message -->
+            </div>
+        </div>
+
+        <div id="results-area">
+            <h2>Results (<span id="entry-count">0</span> entries scanned)</h2>
+            <ul id="scanned-barcode-list"></ul>
+            <div id="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Modal for confirmation -->
+    <div id="confirmation-modal">
+        <div id="modal-content">
+            <p id="modal-text"></p>
+            <button id="confirm-copy" class="modal-button">Yes, Copy Links</button>
+            <button id="cancel-copy" class="modal-button">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const barcodes = []; 
+            let entryCount = 0;
+
+            $('#barcode-input').on('keypress', function(event) {
+                if (event.which === 13) {
+                    event.preventDefault();
+                    const barcode = $(this).val().trim();
+                    if (barcode) {
+                        fetchLink(barcode);
+                        $(this).val('');
+                        $(this).focus();
+                    }
+                }
+            });
+    
+            function fetchLink(barcode) {
+                $.ajax({
+                    url: '/fetch_links',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ barcodes: [barcode] }),
+                    success: function(response) {
+                        const item = response.links[0];
+                        let displayText = '';
+    
+                        if (item) {
+                            if (item.image) {
+                                displayText += `<img src="${item.image}" alt="Cover" /> `;
+                            } else {
+                                displayText += `<img src="https://via.placeholder.com/150" alt="Placeholder Cover" /> `;
+                            }
+    
+                            const artist = item.artist || 'Unknown Artist';
+                            displayText += `<a href="${item.link}" target="_blank">${item.title} by ${artist}</a>`;
+                            const listItem = `<li>${displayText} <button class="remove-button">Remove</button></li>`;
+                            $('#scanned-barcode-list').prepend(listItem);
+                            entryCount++;
+                            $('#entry-count').text(entryCount);
+                        } else {
+                            $('#scanned-barcode-list').append(`<li>No results found for barcode: ${barcode} <button class="remove-button">Remove</button></li>`);
+                        }
+                    },
+                    error: function(err) {
+                        $('#error-message').text('Error fetching data from server: ' + err.responseText);
+                        console.error('API Error:', err);
+                    }
+                });
+            }
+
+            $('#scanned-barcode-list').on('click', '.remove-button', function() {
+                $(this).parent().remove();
+                entryCount--;
+                $('#entry-count').text(entryCount);
+            });
+
+            $('#reset').click(function() {
+                $('#scanned-barcode-list').empty();
+                entryCount = 0;
+                $('#entry-count').text(entryCount);
+            });
+
+            $('#copy-links').click(function() {
+                const links = $('#scanned-barcode-list a').map(function() {
+                    return $(this).attr('href');
+                }).get();
+
+                if (links.length > 0) {
+                    const confirmationText = `Are you sure you want to copy ${links.length} link${links.length > 1 ? 's' : ''}?`;
+                    $('#modal-text').text(confirmationText);
+                    $('#confirmation-modal').show();
+
+                    $('#confirm-copy').off('click').on('click', function() {
+                        const linksText = links.join('\n');
+                        navigator.clipboard.writeText(linksText).then(() => {
+                            $('#copy-confirmation').fadeIn().delay(2000).fadeOut();
+                        }).catch(err => {
+                            console.error('Could not copy text: ', err);
+                        });
+                        $('#confirmation-modal').hide();
+                    });
+
+                    $('#cancel-copy').off('click').on('click', function() {
+                        $('#confirmation-modal').hide();
+                    });
+                } else {
+                    $('#no-links-message').fadeIn().delay(2000).fadeOut();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
