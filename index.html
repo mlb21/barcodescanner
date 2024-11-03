@@ -239,7 +239,7 @@
                             }
     
                             const artist = item.artist || 'Unknown Artist';
-                            displayText += `<a href="${item.link}" target="_blank">${item.title} by ${artist}</a>`;
+                            displayText += `<a href="${item.link}" target="_blank">${item.title}</a>`;
                             const listItem = `<li>${displayText} <button class="remove-button">Remove</button></li>`;
                             $('#scanned-barcode-list').prepend(listItem);
                             entryCount++;
